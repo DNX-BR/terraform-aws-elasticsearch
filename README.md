@@ -9,6 +9,30 @@ The following resources will be created:
 - Security Groups enabling inbound access on default 443 port and from other Security Groups and optionally inbound access from some CIDRs
 - An SSM Parameter with the cluster endpoint
 
+## Usage
+Usage example with ECS cluster.
+```hcl
+module elasticsearch_cluster {
+  source = "git::https://github.com/DNX-BR/terraform-aws-elasticsearch.git"
+
+  name       = "${local.workspace.environment_name}-${local.workspace.elasticsearch.domain}"
+  es_version = local.workspace.elasticsearch.version
+
+  zone_awareness_enabled = local.workspace.elasticsearch.zone_awareness_enabled
+  encrypt                = local.workspace.elasticsearch.encrypt
+
+  instance_type = local.workspace.elasticsearch.instance_type
+  ebs_enabled    = try(local.workspace.elasticsearch.ebs_enabled, true)
+  volume_size    = try(local.workspace.elasticsearch.volume_size, 15)
+
+  vpc_id     = data.aws_vpc.selected.id
+  subnet_ids = data.aws_subnet_ids.private.ids
+
+  allow_security_group_ids = [module.ecs_apps.ecs_nodes_secgrp_id]
+  allow_cidrs              = [local.common.vpn_cidr]
+}
+```
+
 ## Requirements
 
 | Name | Version |
