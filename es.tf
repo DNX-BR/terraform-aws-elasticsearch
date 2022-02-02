@@ -5,13 +5,22 @@ resource "aws_elasticsearch_domain" "es" {
   cluster_config {
     instance_type          = var.instance_type
     zone_awareness_enabled = var.zone_awareness_enabled
+    instance_count         = var.instance_count
+
+    dynamic "zone_awareness_config" {
+      for_each = var.dynamic_zone_awareness_config
+      iterator = zone_awareness
+      content {
+        availability_zone_count = try(zone_awareness.value.availability_zone_count, 2)
+      }
+    }
   }
 
   vpc_options {
     subnet_ids = [
       var.zone_awareness_enabled
-        ? jsonencode(slice(sort(var.subnet_ids), 0, 1))
-        : element(sort(var.subnet_ids), 0)
+      ? jsonencode(slice(sort(var.subnet_ids), 0, var.az_count))
+      : element(sort(var.subnet_ids), 0)
     ]
     security_group_ids = [aws_security_group.es.id]
   }

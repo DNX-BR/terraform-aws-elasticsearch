@@ -13,9 +13,27 @@ variable "instance_type" {
   description = "ElasticSearch instance type"
 }
 
+variable "instance_count" {
+  type        = number
+  default     = 1
+  description = "Number of instances. When using two AZs, this value must be an even number"
+}
+
 variable "zone_awareness_enabled" {
   type    = string
   default = false
+}
+
+variable "dynamic_zone_awareness_config" {
+  type        = any
+  default     = []
+  description = "Dynamic zone_awareness_config block"
+}
+
+variable "az_count" {
+  type        = number
+  default     = 2
+  description = "Number of AZs. Must be equal to availability_zone_count, inside zone_awareness_config"
 }
 
 variable "ebs_enabled" {

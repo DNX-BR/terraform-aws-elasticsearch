@@ -18,8 +18,10 @@ module elasticsearch_cluster {
   name       = "${local.workspace.environment_name}-${local.workspace.elasticsearch.domain}"
   es_version = local.workspace.elasticsearch.version
 
-  zone_awareness_enabled = local.workspace.elasticsearch.zone_awareness_enabled
-  encrypt                = local.workspace.elasticsearch.encrypt
+  zone_awareness_enabled        = local.workspace.elasticsearch.zone_awareness_enabled
+  dynamic_zone_awareness_config = local.workspace.elasticsearch.zone_awareness_config
+  az_count                      = local.workspace.elasticsearch.az_count
+  encrypt                       = local.workspace.elasticsearch.encrypt
 
   instance_type = local.workspace.elasticsearch.instance_type
   ebs_enabled    = try(local.workspace.elasticsearch.ebs_enabled, true)
@@ -45,6 +47,9 @@ module elasticsearch_cluster {
 |------|---------|
 | <a name="provider_aws"></a> [aws](#provider\_aws) | n/a |
 
+## Modules
+
+No modules.
 
 ## Resources
 
@@ -67,9 +72,12 @@ module elasticsearch_cluster {
 |------|-------------|------|---------|:--------:|
 | <a name="input_allow_cidrs"></a> [allow\_cidrs](#input\_allow\_cidrs) | List of CIDRs to allow connection from | `list(string)` | `[]` | no |
 | <a name="input_allow_security_group_ids"></a> [allow\_security\_group\_ids](#input\_allow\_security\_group\_ids) | List of Security Group IDs to allow connection from | `list(string)` | `[]` | no |
+| <a name="input_az_count"></a> [az\_count](#input\_az\_count) | Number of AZs. Must be equal to availability\_zone\_count, inside zone\_awareness\_config | `number` | `2` | no |
+| <a name="input_dynamic_zone_awareness_config"></a> [dynamic\_zone\_awareness\_config](#input\_dynamic\_zone\_awareness\_config) | Dynamic zone\_awareness\_config block | `any` | `[]` | no |
 | <a name="input_ebs_enabled"></a> [ebs\_enabled](#input\_ebs\_enabled) | n/a | `bool` | `true` | no |
 | <a name="input_encrypt"></a> [encrypt](#input\_encrypt) | Flag to whether encrypt or not ES | `bool` | `false` | no |
 | <a name="input_es_version"></a> [es\_version](#input\_es\_version) | ElasticSearch version | `string` | n/a | yes |
+| <a name="input_instance_count"></a> [instance\_count](#input\_instance\_count) | Number of instances. When using two AZs, this value must be an even number | `number` | `1` | no |
 | <a name="input_instance_type"></a> [instance\_type](#input\_instance\_type) | ElasticSearch instance type | `string` | n/a | yes |
 | <a name="input_name"></a> [name](#input\_name) | Cluster name | `string` | n/a | yes |
 | <a name="input_subnet_ids"></a> [subnet\_ids](#input\_subnet\_ids) | Subnet ids to deploy the cluster | `any` | n/a | yes |
