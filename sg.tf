@@ -25,7 +25,7 @@ resource "aws_security_group_rule" "elasticsearch_inbound_cidrs" {
   from_port         = 443
   to_port           = 443
   protocol          = "tcp"
-  cidr_blocks       = var.allow_cidrs
+  cidr_blocks       = [var.allow_cidrs[count.index]]
   security_group_id = aws_security_group.es.id
-  description       = "From CIDR ${join(", ", var.allow_cidrs)}"
+  description       = "From CIDR ${var.allow_cidrs[count.index]}"
 }

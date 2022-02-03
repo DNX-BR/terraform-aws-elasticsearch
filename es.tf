@@ -17,11 +17,7 @@ resource "aws_elasticsearch_domain" "es" {
   }
 
   vpc_options {
-    subnet_ids = [
-      var.zone_awareness_enabled
-      ? jsonencode(slice(sort(var.subnet_ids), 0, var.az_count))
-      : element(sort(var.subnet_ids), 0)
-    ]
+    subnet_ids = var.zone_awareness_enabled ? slice(sort(var.subnet_ids), 0, var.az_count) : [element(sort(var.subnet_ids), 0)]
     security_group_ids = [aws_security_group.es.id]
   }
 
