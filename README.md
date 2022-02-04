@@ -10,28 +10,31 @@ The following resources will be created:
 - An SSM Parameter with the cluster endpoint
 
 ## Usage
-Usage example with ECS cluster.
+Usage example with ECS/EKS cluster.
 ```hcl
-module elasticsearch_cluster {
-  source = "git::https://github.com/DNX-BR/terraform-aws-elasticsearch.git"
+module elasticsearch_cluter {
+  source = "git::https://github.com/DNX-BR/terraform-aws-elasticsearch.git?ref=0.1.0"
+  count  = try(local.workspace.elasticsearch.enabled, false) ? 1 : 0
 
-  name       = "${local.workspace.environment_name}-${local.workspace.elasticsearch.domain}"
-  es_version = local.workspace.elasticsearch.version
+  name       = format("%s-%s", local.workspace.environment_name, try(local.workspace.elasticsearch.domain, ""))
+  es_version = try(local.workspace.elasticsearch.version, 7.10)
 
-  zone_awareness_enabled        = local.workspace.elasticsearch.zone_awareness_enabled
-  dynamic_zone_awareness_config = local.workspace.elasticsearch.zone_awareness_config
-  az_count                      = local.workspace.elasticsearch.az_count
-  encrypt                       = local.workspace.elasticsearch.encrypt
+  dynamic_zone_awareness_config = try(local.workspace.elasticsearch.zone_awareness_config, [])
+  az_count                      = try(local.workspace.elasticsearch.az_count, 1)
 
-  instance_type = local.workspace.elasticsearch.instance_type
+  zone_awareness_enabled = try(local.workspace.elasticsearch.zone_awareness_enabled, false)
+  encrypt                = try(local.workspace.elasticsearch.encrypt, false)
+
+  instance_type  = try(local.workspace.elasticsearch.instance_type, "t3.small.elasticsearch")
+  instance_count = try(local.workspace.elasticsearch.instance_count, 1)
   ebs_enabled    = try(local.workspace.elasticsearch.ebs_enabled, true)
   volume_size    = try(local.workspace.elasticsearch.volume_size, 15)
 
-  vpc_id     = data.aws_vpc.selected.id
-  subnet_ids = data.aws_subnet_ids.private.ids
+  vpc_id     = module.network[0].vpc_id
+  subnet_ids = data.aws_subnet_ids.secure.ids
 
-  allow_security_group_ids = [module.ecs_apps.ecs_nodes_secgrp_id]
-  allow_cidrs              = [local.common.vpn_cidr]
+  allow_security_group_ids = [local.workspace.eks.enabled ? data.aws_security_group.eks_sg[0].id : null]
+  allow_cidrs              = local.common.vpn_cidr
 }
 ```
 
