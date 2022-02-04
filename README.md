@@ -10,26 +10,31 @@ The following resources will be created:
 - An SSM Parameter with the cluster endpoint
 
 ## Usage
-Usage example with ECS cluster.
+Usage example with ECS/EKS cluster.
 ```hcl
-module elasticsearch_cluster {
-  source = "git::https://github.com/DNX-BR/terraform-aws-elasticsearch.git"
+module elasticsearch_cluter {
+  source = "git::https://github.com/DNX-BR/terraform-aws-elasticsearch.git?ref=0.1.0"
+  count  = try(local.workspace.elasticsearch.enabled, false) ? 1 : 0
 
-  name       = "${local.workspace.environment_name}-${local.workspace.elasticsearch.domain}"
-  es_version = local.workspace.elasticsearch.version
+  name       = format("%s-%s", local.workspace.environment_name, try(local.workspace.elasticsearch.domain, ""))
+  es_version = try(local.workspace.elasticsearch.version, 7.10)
 
-  zone_awareness_enabled = local.workspace.elasticsearch.zone_awareness_enabled
-  encrypt                = local.workspace.elasticsearch.encrypt
+  dynamic_zone_awareness_config = try(local.workspace.elasticsearch.zone_awareness_config, [])
+  az_count                      = try(local.workspace.elasticsearch.az_count, 1)
 
-  instance_type = local.workspace.elasticsearch.instance_type
+  zone_awareness_enabled = try(local.workspace.elasticsearch.zone_awareness_enabled, false)
+  encrypt                = try(local.workspace.elasticsearch.encrypt, false)
+
+  instance_type  = try(local.workspace.elasticsearch.instance_type, "t3.small.elasticsearch")
+  instance_count = try(local.workspace.elasticsearch.instance_count, 1)
   ebs_enabled    = try(local.workspace.elasticsearch.ebs_enabled, true)
   volume_size    = try(local.workspace.elasticsearch.volume_size, 15)
 
-  vpc_id     = data.aws_vpc.selected.id
-  subnet_ids = data.aws_subnet_ids.private.ids
+  vpc_id     = module.network[0].vpc_id
+  subnet_ids = data.aws_subnet_ids.secure.ids
 
-  allow_security_group_ids = [module.ecs_apps.ecs_nodes_secgrp_id]
-  allow_cidrs              = [local.common.vpn_cidr]
+  allow_security_group_ids = [local.workspace.eks.enabled ? data.aws_security_group.eks_sg[0].id : null]
+  allow_cidrs              = local.common.vpn_cidr
 }
 ```
 
@@ -45,6 +50,9 @@ module elasticsearch_cluster {
 |------|---------|
 | <a name="provider_aws"></a> [aws](#provider\_aws) | n/a |
 
+## Modules
+
+No modules.
 
 ## Resources
 
@@ -67,9 +75,12 @@ module elasticsearch_cluster {
 |------|-------------|------|---------|:--------:|
 | <a name="input_allow_cidrs"></a> [allow\_cidrs](#input\_allow\_cidrs) | List of CIDRs to allow connection from | `list(string)` | `[]` | no |
 | <a name="input_allow_security_group_ids"></a> [allow\_security\_group\_ids](#input\_allow\_security\_group\_ids) | List of Security Group IDs to allow connection from | `list(string)` | `[]` | no |
+| <a name="input_az_count"></a> [az\_count](#input\_az\_count) | Number of AZs. Must be equal to availability\_zone\_count, inside zone\_awareness\_config | `number` | `2` | no |
+| <a name="input_dynamic_zone_awareness_config"></a> [dynamic\_zone\_awareness\_config](#input\_dynamic\_zone\_awareness\_config) | Dynamic zone\_awareness\_config block | `any` | `[]` | no |
 | <a name="input_ebs_enabled"></a> [ebs\_enabled](#input\_ebs\_enabled) | n/a | `bool` | `true` | no |
 | <a name="input_encrypt"></a> [encrypt](#input\_encrypt) | Flag to whether encrypt or not ES | `bool` | `false` | no |
 | <a name="input_es_version"></a> [es\_version](#input\_es\_version) | ElasticSearch version | `string` | n/a | yes |
+| <a name="input_instance_count"></a> [instance\_count](#input\_instance\_count) | Number of instances. When using two AZs, this value must be an even number | `number` | `1` | no |
 | <a name="input_instance_type"></a> [instance\_type](#input\_instance\_type) | ElasticSearch instance type | `string` | n/a | yes |
 | <a name="input_name"></a> [name](#input\_name) | Cluster name | `string` | n/a | yes |
 | <a name="input_subnet_ids"></a> [subnet\_ids](#input\_subnet\_ids) | Subnet ids to deploy the cluster | `any` | n/a | yes |
